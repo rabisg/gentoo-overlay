@@ -1,0 +1,47 @@
+#!/sbin/runscript
+
+name="Cassandra"
+description=""
+
+CASS_USER=${CASS_USER:="cassandra"}
+PIDFILE="/run/cassandra/cassandra.pid"
+
+server_command="/usr/bin/cassandra"
+server_args=" -p ${PIDFILE}"
+[ -n "${CASS_ERROR_FILE}" ] && ( server_args="${server-args} -E ${CASS_ERROR_FILE}" )
+[ -n "${CASS_DUMP_FILE}" ] && ( server_args="${server-args} -E ${CASS_DUMP_FILE}" )
+
+depend() {
+	use net
+}
+
+start() {
+
+	ebegin "Starting ${SVCNAME}"
+
+	if [ -n "${CASS_MAX_FD}" ]; then
+		ulimit -n ${ES_MAX_FD}
+		einfo "Max open filedescriptors  : ${ES_MAX_FD}"
+	fi
+
+	checkpath -d -o "${CASS_USER}" -m750 "/var/lib/cassandra"
+	checkpath -d -o "${CASS_USER}" -m750 "/var/log/cassandra"
+	checkpath -d -o "${CASS_USER}" -m750 "$(dirname "${PIDFILE}")"
+
+	[ -n "${CASS_ERROR_FILE}" ] && ( checkpath -f -o  "${CASS_USER}" -m644 "${CASS_ERROR_FILE}" )
+	[ -n "${CASS_DUMP_FILE}" ] && ( checkpath -f -o  "${CASS_USER}" -m644 "${CASS_DUMP_FILE}" )
+
+	start-stop-daemon --start \
+		--user="${CASS_USER}" \
+		--pidfile="${PIDFILE}" \
+		--background \
+		--exec ${server_command} -- ${server_args}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping ${SVCNAME}"
+	start-stop-daemon --stop \
+		--pidfile=${PIDFILE}
+	eend $?
+}
