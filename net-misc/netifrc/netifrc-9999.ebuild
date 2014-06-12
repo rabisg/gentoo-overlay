@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit eutils
+inherit eutils systemd
 
 DESCRIPTION="Gentoo Network Interface Management Scripts"
 HOMEPAGE="http://www.gentoo.org/proj/en/base/openrc/"
@@ -48,6 +48,13 @@ src_compile() {
 src_install() {
 	emake ${MAKE_ARGS} DESTDIR="${D}" install
 	dodoc README CREDITS FEATURE-REMOVAL-SCHEDULE STYLE TODO ChangeLog
+
+	# Install the service file
+	LIBEXECDIR=${EPREFIX}/lib/${PN}
+	UNIT_DIR="$(systemd_get_unitdir)"
+	sed "s:@LIBEXECDIR@:${LIBEXECDIR}:" "${FILESDIR}/net_at.service" > "${T}/net_at.service"
+	systemd_newunit "${T}/net_at.service" 'net@.service'
+	dosym "${UNIT_DIR}/net@.service" "${UNIT_DIR}/net@lo.service"
 }
 
 pkg_postinst() {

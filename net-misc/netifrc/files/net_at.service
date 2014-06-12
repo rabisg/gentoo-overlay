@@ -1,6 +1,6 @@
 [Unit]
 Name=net
-Description="Gentoo Network Interface Management Scripts"2
+Description="Gentoo Network Interface Management Scripts"
 
 [Service]
 ExecStart=@LIBEXECDIR@/sh/systemd-wrapper.sh -i %I -p %P -s %N
